@@ -1,4 +1,9 @@
 Revision history for ExtUtils-MakeMaker-Coverage
-
+0.02    2 Mar 2005
+        * Fixed Test::Differences issue in t/mm_coverage.t
+        * Module now exports function C<testcover> for use when the 
+          Makefile.PL already has a C<MY::postamble>
+0.01    26 Feb 2005
+        * Added Note on BSD Make and its issues
 0.01_01 9 Feb 2005
-	Initial release
+	* Initial release

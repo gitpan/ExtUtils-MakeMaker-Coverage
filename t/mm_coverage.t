@@ -1,8 +1,7 @@
 use warnings;
 use strict;
 
-use Test::More tests => 2;
-use Test::Differences;
+use Test::More tests => 3;
 
 BEGIN { use_ok('ExtUtils::MakeMaker::Coverage'); }
 
@@ -23,9 +22,12 @@ END
 
 if ($hasTestDiff) {
     eq_or_diff(MY::postamble, $postamble, "Check MY::postamble output");
+    eq_or_diff(testcover, $postamble, "Check testcover output");
 } else {
+    diag "Test::Differences is suggested for testing this module";
     is(MY::postamble, $postamble, "Check MY::postamble output") || 
         diag "Please consider installing Test::Differences to help determine this bug";
+    is(testcover, $postamble, "Check testcover output");
 }
 
 

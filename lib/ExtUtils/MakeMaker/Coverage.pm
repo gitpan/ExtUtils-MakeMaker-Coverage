@@ -10,11 +10,11 @@ test coverage using Devel::Cover
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -28,12 +28,26 @@ coverage statistics.
     # In Makefile.PL
     use ExtUtils::MakeMaker;
     use ExtUtils::MakeMaker::Coverage;
-
+    ...
+    # if you already have a MY::postamble...
+    sub MY::postamble {
+        testcover();
+        ...
+    }
+ 
 In your shell
 
     > perl Makefile.PL
     > make
     > make testcover
+
+=head1 METHODS
+
+=head2 testcover
+
+This method is exported for use when there already is a MY::postamble in the
+Makefile.PL.  In that case, adding a call to the testcover method will
+add the necessary Makefile steps.
 
 =head1 NOTES
 
@@ -43,22 +57,11 @@ additional features are needed.
 
 =over
 
-=item C<MY::postamble>
+=item BSD make
 
-This module will have issues if the C<Makefile> already has a 
-My::postamble defined for it.
-
-=item C<Devel::Cover> and C<cover>
-
-This module doesn't care if C<Devel::Cover> is installed or if 
-C<cover> is in the path.  This should be changed.
-
-=item BSD C<make>
-
-If you run the C<testcover> step using a BSD C<make>, you will
+From my testing, if you run the testcover step using a BSD make, you will
 get coverage statistics for the test scripts.  This is not at 
-all useful.  C<gmake> is suggested until this issue is 
-resolved.
+all useful.  gmake is suggested until this issue is resolved. 
 
 =back
 
@@ -106,9 +109,7 @@ under the same terms as Perl itself.
 
 =cut
 
-package MY;
-
-sub postamble {
+sub testcover {
     return <<'END';
 COVER = cover
 
@@ -119,6 +120,15 @@ testcover: coverclean
 	HARNESS_PERL_SWITCHES=-MDevel::Cover PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')" $(TEST_FILES)
 	$(COVER)
 END
+}
+
+sub import {
+    my $class = shift;
+    my $caller = caller;
+
+    no strict 'refs';
+    *{$caller . "::testcover"} = \&{$class . "::testcover"};
+    *{"MY::postamble"} = \&{$class . "::testcover"};
 }
 
 1; # End of ExtUtils::MakeMaker::Coverage
