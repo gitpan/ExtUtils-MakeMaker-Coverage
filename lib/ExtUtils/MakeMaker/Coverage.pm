@@ -10,11 +10,11 @@ test coverage using Devel::Cover
 
 =head1 VERSION
 
-Version 0.01_01
+Version 0.01
 
 =cut
 
-our $VERSION = '0.01_01';
+our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
@@ -35,7 +35,7 @@ In your shell
     > make
     > make testcover
 
-=head1 TODO
+=head1 NOTES
 
 This is alpha quality code in terms of features.  For this module
 to be usable for the as many modules as possible, the following
@@ -52,6 +52,13 @@ My::postamble defined for it.
 
 This module doesn't care if C<Devel::Cover> is installed or if 
 C<cover> is in the path.  This should be changed.
+
+=item BSD C<make>
+
+If you run the C<testcover> step using a BSD C<make>, you will
+get coverage statistics for the test scripts.  This is not at 
+all useful.  C<gmake> is suggested until this issue is 
+resolved.
 
 =back
 
