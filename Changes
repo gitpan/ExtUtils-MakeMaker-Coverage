@@ -1,4 +1,9 @@
 Revision history for ExtUtils-MakeMaker-Coverage
+
+0.03    11 Apr 2005
+        * Actually fixed Test::Differences issue :-/
+        * [RT #11750] Missing dependency for testcover target - thanks
+           to Guillaume Rousse for the patch
 0.02    2 Mar 2005
         * Fixed Test::Differences issue in t/mm_coverage.t
         * Module now exports function C<testcover> for use when the 

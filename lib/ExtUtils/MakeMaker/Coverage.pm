@@ -10,11 +10,11 @@ test coverage using Devel::Cover
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -62,6 +62,12 @@ additional features are needed.
 From my testing, if you run the testcover step using a BSD make, you will
 get coverage statistics for the test scripts.  This is not at 
 all useful.  gmake is suggested until this issue is resolved. 
+
+=item nmake
+
+I have not tested this enough with nmake.  I have done some initial changes
+to make it work, but it requires more refactoring to get to where I'd like
+to see it.  Expect full support in a release or two.
 
 =back
 
@@ -116,8 +122,7 @@ COVER = cover
 coverclean:
 	$(COVER) -delete
 
-testcover: coverclean
-	HARNESS_PERL_SWITCHES=-MDevel::Cover PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')" $(TEST_FILES)
+testcover: coverclean pure_all
 	$(COVER)
 END
 }
