@@ -1,5 +1,6 @@
 Revision history for ExtUtils-MakeMaker-Coverage
-
+0.04    11 Apr 2005
+        * Oops!  0.03 was broken.  
 0.03    11 Apr 2005
         * Actually fixed Test::Differences issue :-/
         * [RT #11750] Missing dependency for testcover target - thanks

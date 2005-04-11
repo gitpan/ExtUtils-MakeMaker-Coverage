@@ -12,6 +12,7 @@ coverclean:
 	$(COVER) -delete
 
 testcover: coverclean pure_all
+	HARNESS_PERL_SWITCHES=-MDevel::Cover PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')" $(TEST_FILES)
 	$(COVER)
 END
 

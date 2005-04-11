@@ -4,4 +4,4 @@ BEGIN {
 use_ok( 'ExtUtils::MakeMaker::Coverage' );
 }
 
-diag( "Testing ExtUtils::MakeMaker::Coverage $ExtUtils::MakeMaker::Coverage::VERSION" );
+diag( "Testing ExtUtils::MakeMaker::Coverage $ExtUtils::MakeMaker::Coverage::VERSION $^X" );
