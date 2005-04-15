@@ -11,7 +11,9 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More' => 0,
         'Devel::Cover' => 0,
+        'Object::Accessor' => 0,
     },
+    EXE_FILES           => [ "testcover", ],
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'ExtUtils-MakeMaker-Coverage-*' },
 );

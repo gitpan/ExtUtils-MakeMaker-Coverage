@@ -1,34 +1,52 @@
 use warnings;
 use strict;
 
-use Test::More tests => 3;
+### 3 + scalar @Pat
+use Test::More tests => 17;
 
-BEGIN { use_ok('ExtUtils::MakeMaker::Coverage'); }
+my $Pkg = 'ExtUtils::MakeMaker::Coverage';
+my @Pat = ( 
+    qr/COVER = cover/,
+    qr/coverclean:/,
+    qr/\t\$\(COVER\) -delete/,
+    qr/testcover: coverclean pure_all/,
+    qr/HARNESS_PERL_SWITCHES='-MDevel::Cover=/,
+    qr/-coverage,branch/,
+    qr/-coverage,condition/, 
+    qr/-coverage,pod/,
+    qr/-coverage,statement/,
+    qr/-coverage,subroutine/,
+    qr/\$\(FULLPERLRUN\) "-MExtUtils::Command::MM"/,
+    qr/test_harness\(\$\(TEST_VERBOSE\)/,
+    qr/\$\(TEST_FILES\)/,
+    qr/\t\$\(COVER\)/
+);
 
-my $postamble = <<'END';
+use_ok( $Pkg );
+can_ok( $Pkg, 'testcover' );
+
+my $Target = $Pkg->testcover;
+
+is( $Target, MY::postamble(),     "Target installed as 'MY::postamble'" );
+
+for my $pat ( @Pat ) {
+    like( $Target, $pat,        "   Target matches $pat" );
+}
+
+__END__
+
+The target looks something like this:
+
+
 COVER = cover
 
 coverclean:
 	$(COVER) -delete
 
 testcover: coverclean pure_all
-	HARNESS_PERL_SWITCHES=-MDevel::Cover PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')" $(TEST_FILES)
+	HARNESS_PERL_SWITCHES='-MDevel::Cover=-coverage,branch,-coverage,condition,-coverage,pod,-coverage,statement,-coverage,subroutine' PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness($(TEST_VERBOSE), '$(INST_LIB)','$(INST_ARCHLIB)')" $(TEST_FILES)
+
 	$(COVER)
+
+
 END
-
-# following checks gently lifted from Devel::Cover's Makefile.PL :)
-
-eval "use Test::Differences";
-if (my $m = $INC{"Test/Differences.pm"}) {
-    my $v = eval { no warnings; $Test::Differences::VERSION };
-    diag "Using $m $v";
-    eq_or_diff(MY::postamble, $postamble, "Check MY::postamble output");
-    eq_or_diff(testcover, $postamble, "Check testcover output");
-} else {
-    diag "Test::Differences is suggested for testing this module";
-    is(MY::postamble, $postamble, "Check MY::postamble output") || 
-        diag "Please consider installing Test::Differences to help determine this bug";
-    is(testcover, $postamble, "Check testcover output");
-}
-
-

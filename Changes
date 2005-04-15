@@ -1,4 +1,8 @@
 Revision history for ExtUtils-MakeMaker-Coverage
+0.05    13 Apr 2005
+        * Extensive changes added by Jos Boumans.  Thanks!
+        * The new config() method, also by Jos, allows for much of the
+          configuration Devel::Cover allows.
 0.04    11 Apr 2005
         * Oops!  0.03 was broken.  
 0.03    11 Apr 2005

@@ -1,0 +1,111 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Getopt::Long;
+use File::Basename qw[basename];
+
+use ExtUtils::MakeMaker::Coverage;
+my $obj = ExtUtils::MakeMaker::Coverage->config;
+
+my $opts = {};
+GetOptions( $opts,
+            'binary=s',     'make=s',
+            'format=s',
+            'files=s@',     'ignore=s@',
+            'statement!',   'branch!',
+            'subroutine!',  'condition!',
+            'pod!',
+            'dump',         'help'
+        );
+
+
+die usage() if exists $opts->{'help'};
+
+for my $meth ( $obj->ls_accessors ) {
+    
+    if( my ($opt) = $meth =~ /^cover_(.+)/ ) {
+        
+        ### set the accessor to the provided value, IF provided :)
+        $obj->$meth( $opts->{$opt} ) if exists $opts->{$opt}; 
+
+    } elsif ( exists $opts->{$meth} ) {
+        ### set this option, if provided
+        $obj->$meth( $opts->{$meth} );
+    }
+}
+
+### print the config as we have it now
+if( $opts->{'dump'} ) {
+    
+    die testcover() . $/;
+
+### start running the coverage
+} else {  
+    
+    do 'Makefile.PL';
+    my $make = $opts->{'make'} || 'make';
+
+    system( "$make testcover" );
+}
+
+
+
+sub usage {
+    my $me = basename($0);
+
+    return qq[
+Usage:  $me [--files TEST_FILE [--files TEST_FILE]]
+            [--ignore PATTERN  [--ignore PATTERN]]
+            [--format REPORT_FORMAT] [--binary /PATH/TO/COVER]
+            [--make /PATH/TO/MAKE] [--dump]
+            [--[no]statement] [--[no]subroutine] [--[no]pod]
+            [--[no]condition] [--[no]branch]
+
+    This is a commandline frontend to ExtUtils::MakeMaker::Coverage,
+    allowing you to run test coverage in a flexible way during 
+    development. Read the ExtUtils::MakeMaker::Coverage manpage for
+    more information.
+
+Options:
+
+    --files      # Test files to run, can be given multiple times
+    --ignore     # File patterns to ignore, can be given multiple times
+    --format     # Output format to use for 'cover -report'
+    --binary     # Path to your cover binary
+    --make       # Path to your make binary
+    --dump       # Dont run coverage, just print the 'testcover' target
+    
+    --statement  # Cover statements (default). Turn off with --nostatement
+    --condition  # Cover conditions (default). Turn off with --nocondition
+    --subroutine # Cover subroutines (default). Turn off with --nosubroutine
+    --pod        # Cover pod (default). Turn off with --nopod
+    --branch     # Cover branches (default). Turn off with --nobranch
+
+Examples:
+
+    ### run coverage on 1.t and 2.t, ignore any files with 'SCCS' in
+    ### their name in the coverage report
+    $me --files t/1.t --files t/2.t --ignore SCCS
+
+    ### run coverage and output the format in 'OurHtmlReport' format,
+    ### omitting pod and branch coverage
+    $me --format OurHtmlReport --nopod --nobranch
+
+    ### show me the testcover target you would have written for these
+    ### options
+    $me --dump --nopod --files t/1.t --ignore SCCS
+
+    \n];
+}
+
+__END__
+
+        binary              => 'cover',
+        format              => '',
+        ignore              => '',
+        files               => '',
+        cover_statement     => 1,
+        cover_branch        => 1,
+        cover_subroutine    => 1,
+        cover_condition     => 1,
+        cover_pod           => 1,

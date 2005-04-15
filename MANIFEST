@@ -1,4 +1,5 @@
 Changes
+testcover
 lib/ExtUtils/MakeMaker/Coverage.pm
 Makefile.PL
 MANIFEST
@@ -6,5 +7,6 @@ META.yml			# Will be created by "make dist"
 README
 t/00.load.t
 t/mm_coverage.t
+t/mm_coverage_config.t
 t/pod-coverage.t
 t/pod.t

@@ -2,6 +2,8 @@ package ExtUtils::MakeMaker::Coverage;
 
 use warnings;
 use strict;
+use base 'Object::Accessor';
+
 
 =head1 NAME
 
@@ -10,11 +12,11 @@ test coverage using Devel::Cover
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -34,7 +36,11 @@ coverage statistics.
         testcover();
         ...
     }
- 
+    
+    # if you wish to tweak the testcover target that will be written,
+    # alter it's configuration.
+    $conf = ExtUtils::MakeMaker::Coverage->config;
+    
 In your shell
 
     > perl Makefile.PL
@@ -43,16 +49,195 @@ In your shell
 
 =head1 METHODS
 
+=cut
+
+sub import {
+    my $class   = shift;
+    my $caller  = caller;
+    my $arg     = shift || '';
+
+    
+
+
+    no strict 'refs';
+    *{$caller . "::testcover"} = \&{$class . "::testcover"};
+    *{"MY::postamble"} = \&{$class . "::testcover"};
+}
+
 =head2 testcover
 
 This method is exported for use when there already is a MY::postamble in the
 Makefile.PL.  In that case, adding a call to the testcover method will
 add the necessary Makefile steps.
 
+=cut
+
+sub testcover {
+    ### our base object
+    my $obj = __PACKAGE__->config;
+
+    ### make a list of things to cover
+    my $to_cover = join ",", map  { s/cover_//; "-coverage,$_" }
+                             grep { /^cover/ && $obj->$_ } $obj->ls_accessors;
+
+    ### make a list of patterns to ignore
+    my $ignore = ref $obj->ignore 
+                        ? join(',', map { "+ignore,$_" } @{$obj->ignore})
+                        : '';
+
+    ### what files to run coverage on
+    my $files = ref $obj->files ? join(' ', @{$obj->files}) : '$(TEST_FILES)';
+
+    ### what type of reporting tool to use
+    my $report = $obj->format ? "-report " . $obj->format : '';
+
+    ### the path to the cover binary to use
+    my $bin = $obj->binary;
+
+
+    ### basic make fragment, this includes the coverable parts    
+    my $make_frag = qq[\n
+COVER = $bin
+
+coverclean:
+	\$(COVER) -delete
+
+testcover: coverclean pure_all
+	HARNESS_PERL_SWITCHES='-MDevel::Cover=$to_cover];
+
+    ### did you provide an ignore list? if so, add it to the make frag
+    ### (dont forget the trailing "' ', or just add the trailing "' " if
+    ### there are no ignore patterns
+    $make_frag .= $ignore ? ",$ignore' " : "' ";
+
+    ### add the invocation to test, where the files to test are 
+    ### determined by our config
+    $make_frag .=   q[PERL_DL_NONLAZY=1 $(FULLPERLRUN) ] .
+                    q["-MExtUtils::Command::MM" "-e" ] .
+                    q["test_harness($(TEST_VERBOSE), '$(INST_LIB)',] .
+                    q['$(INST_ARCHLIB)')" ] . $files;
+
+    ### add the proper report format
+    $make_frag .= qq[\n                    
+	\$(COVER) $report
+
+\n];
+
+    return $make_frag;
+}
+
+=head2 config
+
+This method returns the internal config object used by this package
+to create the C<testcover> target for the Makefile.
+
+You can change parts of the C<testcover> target by setting accessors
+of this object
+
+=over 4
+
+=item binary
+
+The value to use for the C<cover> binary. Defaults to C<cover>.
+
+=item format
+
+The output format to use for C<cover -report>. Defaults to none,
+using C<cover>'s default settings. Consult C<perldoc cover> for
+documentation on its C<-report> switch.
+
+=item ignore
+
+An array ref of patterns to ignore when generating the coverage
+report. Defaults to an empty list. Consult C<perldoc cover> for 
+documentation on its C<-ignore> switch.
+
+=item files
+
+An array ref of test files to run for this coverage reprort.
+Defaults to the C<$(TESTFILES)> variable as defined in your 
+C<Makefile>. Consult C<perldoc ExtUtils::MakeMaker> for details.
+
+=item cover_statement
+
+Boolean indicating whether to run coverage on statements. Defaults
+to true. Consult C<perldoc cover> for documentation on its 
+C<-coverage> switch.
+
+=item cover_branch
+
+Boolean indicating whether to run coverage on branches. Defaults
+to true. Consult C<perldoc cover> for documentation on its 
+C<-coverage> switch.
+
+=item cover_subroutine
+
+Boolean indicating whether to run coverage on subroutines. Defaults
+to true. Consult C<perldoc cover> for documentation on its 
+C<-coverage> switch.
+
+=item cover_condition
+
+Boolean indicating whether to run coverage on conditions. Defaults
+to true. Consult C<perldoc cover> for documentation on its 
+C<-coverage> switch.
+
+=item cover_pod
+
+Boolean indicating whether to run coverage on POD. Defaults
+to true. Consult C<perldoc cover> for documentation on its 
+C<-coverage> switch.
+
+
+Example:
+
+    $config = ExtUtils::MakeMaker::Coverage->config;
+
+    $config->pod(0);                    # disable pod coverage
+    $config->files(['t/1.t', 't/2.t']); # use these test files only
+    $config->ignore(['SCCS']);          # ignore files with these 
+                                        # patterns in their path
+
+=back
+
+=cut
+
+{   my %conf = (
+        binary              => 'cover',
+        format              => '',
+        ignore              => '',
+        files               => '',
+        cover_statement     => 1,
+        cover_branch        => 1,
+        cover_subroutine    => 1,
+        cover_condition     => 1,
+        cover_pod           => 1,
+    );
+
+    ### create a base object
+    my $obj = __PACKAGE__->new;
+    
+    ### set all accessors
+    $obj->mk_accessors( keys %conf );
+    
+    ### initialize them
+    for my $meth ( keys %conf ) {
+        $obj->$meth( $conf{$meth} );
+    }
+
+    ### accessor to return the base object
+    sub config { return $obj }
+}
+
+
+1; # End of ExtUtils::MakeMaker::Coverage
+
+__END__
+
 =head1 NOTES
 
 This is alpha quality code in terms of features.  For this module
-to be usable for the as many modules as possible, the following
+to be usable for as many modules as possible, the following
 additional features are needed.
 
 =over
@@ -94,6 +279,11 @@ For developing C<Devel::Cover> and enduring my many questions on IRC.
 
 For helping to make me a test-infected Perl programmer.
 
+=item Jos Boumans
+
+For making many of the changes for the 0.05 release, including the testcover
+script.
+
 =back
 
 =head1 SEE ALSO
@@ -114,27 +304,3 @@ This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
-
-sub testcover {
-    return <<'END';
-COVER = cover
-
-coverclean:
-	$(COVER) -delete
-
-testcover: coverclean pure_all
-	HARNESS_PERL_SWITCHES=-MDevel::Cover PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')" $(TEST_FILES)
-	$(COVER)
-END
-}
-
-sub import {
-    my $class = shift;
-    my $caller = caller;
-
-    no strict 'refs';
-    *{$caller . "::testcover"} = \&{$class . "::testcover"};
-    *{"MY::postamble"} = \&{$class . "::testcover"};
-}
-
-1; # End of ExtUtils::MakeMaker::Coverage
